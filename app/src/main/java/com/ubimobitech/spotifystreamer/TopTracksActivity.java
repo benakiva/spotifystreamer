@@ -2,12 +2,15 @@ package com.ubimobitech.spotifystreamer;
 
 import android.content.Intent;
 import android.os.AsyncTask;
+import android.os.Handler;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import java.util.HashMap;
@@ -20,6 +23,9 @@ import kaaes.spotify.webapi.android.SpotifyService;
 import kaaes.spotify.webapi.android.models.Image;
 import kaaes.spotify.webapi.android.models.Track;
 import kaaes.spotify.webapi.android.models.Tracks;
+import retrofit.Callback;
+import retrofit.RetrofitError;
+import retrofit.client.Response;
 
 public class TopTracksActivity extends AppCompatActivity {
     public static final String ARTIST_ID_INTENT_EXTRA =
@@ -27,8 +33,9 @@ public class TopTracksActivity extends AppCompatActivity {
 
     private SpotifyApi mSpotifyApi;
     private SpotifyService mSpotify;
-    private TopTracksTask mTopTracksTask = null;
     private static Tracks mTracks;
+    private ProgressBar mProgressBar;
+    private Handler mHandler = new Handler();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,20 +43,12 @@ public class TopTracksActivity extends AppCompatActivity {
         setContentView(R.layout.activity_top_tracks);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
+        mProgressBar = (ProgressBar) findViewById(R.id.progress_bar);
+
         mSpotifyApi = new SpotifyApi();
         mSpotify = mSpotifyApi.getService();
 
-        fetchTopTracks(getIntent().getStringExtra(ARTIST_ID_INTENT_EXTRA));
-    }
-
-    private void fetchTopTracks(String id) {
-        if (mTopTracksTask != null) {
-            mTopTracksTask.cancel(true);
-            mTopTracksTask = null;
-        }
-
-        mTopTracksTask = new TopTracksTask();
-        mTopTracksTask.execute(id);
+        getArtistTopTrack(getIntent().getStringExtra(ARTIST_ID_INTENT_EXTRA));
     }
 
     @Override
@@ -77,79 +76,95 @@ public class TopTracksActivity extends AppCompatActivity {
         return mTracks;
     }
 
-    private class TopTracksTask extends AsyncTask<String, Void, Tracks> {
+    private void getArtistTopTrack(String artistId) {
+        mProgressBar.setVisibility(View.VISIBLE);
 
-        /**
-         * Override this method to perform a computation on a background thread. The
-         * specified parameters are the parameters passed to {@link #execute}
-         * by the caller of this task.
-         * <p/>
-         * This method can call {@link #publishProgress} to publish updates
-         * on the UI thread.
-         *
-         * @param params The parameters of the task.
-         * @return A result, defined by the subclass of this task.
-         * @see #onPreExecute()
-         * @see #onPostExecute
-         * @see #publishProgress
-         */
-        @Override
-        protected Tracks doInBackground(String... params) {
-            Map countryCode = new HashMap<String, String>();
-            Locale current = getResources().getConfiguration().locale;
+        Map countryCode = new HashMap<String, String>();
+        Locale current = getResources().getConfiguration().locale;
 
-            countryCode.put("country", current.getCountry());
+        countryCode.put("country", current.getCountry());
 
-            return mSpotify.getArtistTopTrack(params[0], countryCode);
-        }
+        mSpotify.getArtistTopTrack(artistId, countryCode, new Callback<Tracks>() {
 
-        /**
-         * <p>Runs on the UI thread after {@link #doInBackground}. The
-         * specified result is the value returned by {@link #doInBackground}.</p>
-         * <p/>
-         * <p>This method won't be invoked if the task was cancelled.</p>
-         *
-         * @param tracks The result of the operation computed by {@link #doInBackground}.
-         * @see #onPreExecute
-         * @see #doInBackground
-         * @see #onCancelled(Object)
-         */
-        @Override
-        protected void onPostExecute(Tracks tracks) {
-            mTracks = tracks;
+            /**
+             * Successful HTTP response.
+             *
+             * @param tracks
+             * @param response
+             */
+            @Override
+            public void success(Tracks tracks, Response response) {
+                mTracks = tracks;
 
-            String artistName = "";
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mHandler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                mProgressBar.setVisibility(View.GONE);
 
-            if (mTracks != null && mTracks.tracks.size() > 0) {
-                if (mTracks.tracks.get(0).artists.size() > 0)
-                    artistName = mTracks.tracks.get(0).artists.get(0).name;
+                                String artistName = "";
+
+                                if (mTracks != null && mTracks.tracks.size() > 0) {
+                                    if (mTracks.tracks.get(0).artists.size() > 0)
+                                        artistName = mTracks.tracks.get(0).artists.get(0).name;
+                                }
+
+                                getSupportActionBar().setSubtitle(artistName);
+
+                                FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+
+                                if (mTracks != null && mTracks.tracks.size() > 1) {
+                                    TopTracksFragment fragment = TopTracksFragment.newInstance();
+                                    ft.replace(R.id.top_track_container, fragment);
+                                    ft.commit();
+                                } else if (mTracks != null && mTracks.tracks.size() == 1) {
+                                    Track track = mTracks.tracks.get(0);
+
+                                    List<Image> imgs = track.album.images;
+                                    String imgUrl = "";
+
+                                    if (imgs.size() > 0)
+                                        imgUrl = imgs.get(0).url;
+
+                                    SingleTopTrackFragment f = SingleTopTrackFragment.newInstance(track.name, imgUrl,
+                                            track.album.name);
+                                    ft.replace(R.id.top_track_container, f);
+                                    ft.commit();
+                                } else {
+                                    Toast.makeText(getApplicationContext(), R.string.no_artist_found,
+                                            Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        });
+                    }
+                }).start();
             }
 
-            getSupportActionBar().setSubtitle(artistName);
+            /**
+             * Unsuccessful HTTP response due to network failure, non-2XX status code, or unexpected
+             * exception.
+             *
+             * @param error
+             */
+            @Override
+            public void failure(RetrofitError error) {
+                final String msg = error.getMessage();
 
-            FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+                new Thread(new Runnable() {
+                    public void run() {
+                        mHandler.post(new Runnable() {
+                            public void run() {
+                                mProgressBar.setVisibility(View.GONE);
 
-            if (mTracks != null && mTracks.tracks.size() > 1) {
-                TopTracksFragment fragment = TopTracksFragment.newInstance();
-                ft.replace(R.id.top_track_container, fragment);
-                ft.commit();
-            } else if (mTracks != null && mTracks.tracks.size() == 1) {
-                Track track = mTracks.tracks.get(0);
-
-                List<Image> imgs = track.album.images;
-                String imgUrl = "";
-
-                if (imgs.size() > 0)
-                    imgUrl = imgs.get(0).url;
-
-                SingleTopTrackFragment f = SingleTopTrackFragment.newInstance(track.name, imgUrl,
-                        track.album.name);
-                ft.replace(R.id.top_track_container, f);
-                ft.commit();
-            } else {
-                Toast.makeText(getApplicationContext(), R.string.no_artist_found,
-                        Toast.LENGTH_SHORT).show();
+                                Toast.makeText(getApplicationContext(), msg,
+                                        Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
+                }).start();
             }
-        }
+        });
     }
 }

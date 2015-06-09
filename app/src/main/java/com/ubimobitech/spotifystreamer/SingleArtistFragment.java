@@ -4,6 +4,7 @@ package com.ubimobitech.spotifystreamer;
 import android.app.Activity;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -92,7 +93,8 @@ public class SingleArtistFragment extends Fragment implements View.OnClickListen
         TextView name = (TextView) view.findViewById(R.id.artist_name);
         name.setText(mName);
 
-        Picasso.with(getActivity()).load(mImgUrl).into(icon);
+        if (!TextUtils.isEmpty(mImgUrl))
+            Picasso.with(getActivity()).load(mImgUrl).into(icon);
 
         return view;
     }

@@ -1,8 +1,8 @@
 package com.ubimobitech.spotifystreamer;
 
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -10,6 +10,8 @@ import android.support.v7.widget.SearchView;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.ubimobitech.spotifystreamer.interfaces.OnArtistClickListener;
@@ -21,19 +23,29 @@ import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.SpotifyService;
 import kaaes.spotify.webapi.android.models.Artist;
 import kaaes.spotify.webapi.android.models.ArtistsPager;
+import retrofit.Callback;
+import retrofit.RetrofitError;
+import retrofit.client.Response;
 
 public class MainActivity extends AppCompatActivity implements OnArtistClickListener {
     private static final String TAG = MainActivity.class.getSimpleName();
     private SpotifyApi mSpotifyApi;
     private SpotifyService mSpotify;
-    private ArtistsTask mArtistTask = null;
     private String mQuery = "";
     private static ArtistsPager mArtistsPager;
+    private ProgressBar mProgressBar;
+
+    private static final int SUCCESS = 0;
+    private static final int FAILURE = -1;
+
+    private static Handler mHandler = new Handler();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mProgressBar = (ProgressBar) findViewById(R.id.progress_bar);
 
         mSpotifyApi = new SpotifyApi();
         mSpotify = mSpotifyApi.getService();
@@ -55,7 +67,7 @@ public class MainActivity extends AppCompatActivity implements OnArtistClickList
                 searchView.setQuery("", false);
                 mQuery = query;
 
-                fetchArtist(mQuery);
+                searchArtist(urlEncode(mQuery));
 
                 return true;
             }
@@ -78,16 +90,6 @@ public class MainActivity extends AppCompatActivity implements OnArtistClickList
         return mArtistsPager;
     }
 
-    private void fetchArtist(String artist) {
-        if (mArtistTask != null) {
-            mArtistTask.cancel(true);
-            mArtistTask = null;
-        }
-
-        mArtistTask = new ArtistsTask();
-        mArtistTask.execute(urlEncode(artist));
-    }
-
     public static String urlEncode(String data) {
         try {
             return URLEncoder.encode(data, "UTF-8");
@@ -105,65 +107,65 @@ public class MainActivity extends AppCompatActivity implements OnArtistClickList
         startActivity(intent);
     }
 
-    private class ArtistsTask extends AsyncTask<String, Void, ArtistsPager> {
+    private void searchArtist(String artist) {
+        mProgressBar.setVisibility(View.VISIBLE);
 
-        /**
-         * Override this method to perform a computation on a background thread. The
-         * specified parameters are the parameters passed to {@link #execute}
-         * by the caller of this task.
-         * <p/>
-         * This method can call {@link #publishProgress} to publish updates
-         * on the UI thread.
-         *
-         * @param params The parameters of the task.
-         * @return A result, defined by the subclass of this task.
-         * @see #onPreExecute()
-         * @see #onPostExecute
-         * @see #publishProgress
-         */
-        @Override
-        protected ArtistsPager doInBackground(String... params) {
-            return mSpotify.searchArtists(params[0]);
-        }
+        mSpotify.searchArtists(artist, new Callback<ArtistsPager>() {
+            @Override
+            public void success(ArtistsPager artistsPager, Response response) {
+                mArtistsPager = artistsPager;
 
-        /**
-         * <p>Runs on the UI thread after {@link #doInBackground}. The
-         * specified result is the value returned by {@link #doInBackground}.</p>
-         * <p/>
-         * <p>This method won't be invoked if the task was cancelled.</p>
-         *
-         * @param artistsPager The result of the operation computed by {@link #doInBackground}.
-         * @see #onPreExecute
-         * @see #doInBackground
-         * @see #onCancelled(Object)
-         */
-        @Override
-        protected void onPostExecute(ArtistsPager artistsPager) {
-            mArtistsPager = artistsPager;
+                // Start lengthy operation in a background thread
+                new Thread(new Runnable() {
+                    public void run() {
+                        mHandler.post(new Runnable() {
+                            public void run() {
+                                mProgressBar.setVisibility(View.GONE);
 
-            if (artistsPager != null && artistsPager.artists.total > 1) {
-                MainActivityFragment artistList = MainActivityFragment.newInstance(mQuery);
-                FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-                ft.replace(R.id.container, artistList);
-                ft.commit();
-            } else if (artistsPager != null && artistsPager.artists.total == 1) {
-                Artist artist = mArtistsPager.artists.items.get(0);
-                String imgUrl = "";
+                                if (mArtistsPager != null && mArtistsPager.artists.total > 1) {
+                                    MainActivityFragment artistList = MainActivityFragment.newInstance(mQuery);
+                                    FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+                                    ft.replace(R.id.container, artistList);
+                                    ft.commit();
+                                } else if (mArtistsPager != null && mArtistsPager.artists.total == 1) {
+                                    Artist artist = mArtistsPager.artists.items.get(0);
+                                    String imgUrl = "";
 
-                if (artist.images.size() > 0)
-                    imgUrl = artist.images.get(0).url;
+                                    if (artist.images.size() > 0)
+                                        imgUrl = artist.images.get(0).url;
 
-                SingleArtistFragment fragment = SingleArtistFragment.newInstance(artist.name,
-                        imgUrl, artist.id);
-                FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-                ft.replace(R.id.container, fragment);
-                ft.commit();
-            } else {
-                Toast.makeText(getApplicationContext(), R.string.no_artist_found,
-                        Toast.LENGTH_SHORT).show();
+                                    SingleArtistFragment fragment = SingleArtistFragment.newInstance(artist.name,
+                                            imgUrl, artist.id);
+                                    FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+                                    ft.replace(R.id.container, fragment);
+                                    ft.commit();
+                                } else {
+                                    Toast.makeText(getApplicationContext(), R.string.no_artist_found,
+                                            Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        });
+                    }
+                }).start();
             }
-        }
+
+            @Override
+            public void failure(RetrofitError error) {
+                final String msg = error.getMessage();
+
+                new Thread(new Runnable() {
+                    public void run() {
+                        mHandler.post(new Runnable() {
+                            public void run() {
+                                mProgressBar.setVisibility(View.GONE);
+
+                                Toast.makeText(getApplicationContext(), msg,
+                                        Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
+                }).start();
+            }
+        });
     }
-
-
 }

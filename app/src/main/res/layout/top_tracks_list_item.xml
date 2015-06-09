@@ -28,5 +28,7 @@
         android:layout_height="wrap_content"
         android:layout_toRightOf="@id/album_icon"
         android:layout_below="@id/album_title"
+        android:maxLines="1"
+        android:ellipsize="end"
         />
 </RelativeLayout>

@@ -3,6 +3,7 @@ package com.ubimobitech.spotifystreamer;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -70,7 +71,9 @@ public class SingleTopTrackFragment extends Fragment {
         TextView track = (TextView) view.findViewById(R.id.track_title);
         TextView album = (TextView) view.findViewById(R.id.album_title);
 
-        Picasso.with(getActivity()).load(mAlbumImg).into(icon);
+        if (!TextUtils.isEmpty(mAlbumImg))
+            Picasso.with(getActivity()).load(mAlbumImg).into(icon);
+
         track.setText(mTrackName);
         album.setText(mAlbumName);
 

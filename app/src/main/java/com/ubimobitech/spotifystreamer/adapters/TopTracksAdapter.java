@@ -8,6 +8,7 @@
 package com.ubimobitech.spotifystreamer.adapters;
 
 import android.content.Context;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -110,7 +111,7 @@ public class TopTracksAdapter extends BaseAdapter {
 
         List<Image> icons = track.album.images;
 
-        if (icons.size() > 0) {
+        if (icons.size() > 0 && !TextUtils.isEmpty(icons.get(0).url)) {
             Picasso.with(mContext).load(icons.get(0).url).into(holder.icon);
             holder.icon.setVisibility(View.VISIBLE);
         } else {
