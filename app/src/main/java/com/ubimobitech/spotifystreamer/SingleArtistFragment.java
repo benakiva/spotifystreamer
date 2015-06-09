@@ -14,6 +14,9 @@ import android.widget.TextView;
 import com.squareup.picasso.Picasso;
 import com.ubimobitech.spotifystreamer.interfaces.OnArtistClickListener;
 
+import butterknife.ButterKnife;
+import butterknife.InjectView;
+
 
 /**
  * A simple {@link Fragment} subclass.
@@ -28,6 +31,9 @@ public class SingleArtistFragment extends Fragment implements View.OnClickListen
     private String mImgUrl;
     private String mArtistId;
     private OnArtistClickListener mListener;
+
+    @InjectView(R.id.artist_icon) ImageView mIcon;
+    @InjectView(R.id.artist_name) TextView mArtistName;
 
     /**
      * Use this factory method to create a new instance of
@@ -89,12 +95,11 @@ public class SingleArtistFragment extends Fragment implements View.OnClickListen
         View view = inflater.inflate(R.layout.single_artist, container, false);
         view.setOnClickListener(this);
 
-        ImageView icon = (ImageView) view.findViewById(R.id.artist_icon);
-        TextView name = (TextView) view.findViewById(R.id.artist_name);
-        name.setText(mName);
+        ButterKnife.inject(this, view);
+        mArtistName.setText(mName);
 
         if (!TextUtils.isEmpty(mImgUrl))
-            Picasso.with(getActivity()).load(mImgUrl).into(icon);
+            Picasso.with(getActivity()).load(mImgUrl).into(mIcon);
 
         return view;
     }

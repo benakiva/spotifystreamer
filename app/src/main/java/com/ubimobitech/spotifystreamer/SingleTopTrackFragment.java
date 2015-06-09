@@ -12,6 +12,9 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
+import butterknife.ButterKnife;
+import butterknife.InjectView;
+
 /**
  * A simple {@link Fragment} subclass.
  * Use the {@link SingleTopTrackFragment#newInstance} factory method to
@@ -25,6 +28,10 @@ public class SingleTopTrackFragment extends Fragment {
     private String mTrackName;
     private String mAlbumImg;
     private String mAlbumName;
+
+    @InjectView(R.id.album_icon) ImageView mIcon;
+    @InjectView(R.id.track_title) TextView mTrack;
+    @InjectView(R.id.album_title) TextView mAlbum;
 
     /**
      * Use this factory method to create a new instance of
@@ -67,15 +74,13 @@ public class SingleTopTrackFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.single_top_track_item, container, false);
 
-        ImageView icon = (ImageView) view.findViewById(R.id.album_icon);
-        TextView track = (TextView) view.findViewById(R.id.track_title);
-        TextView album = (TextView) view.findViewById(R.id.album_title);
+        ButterKnife.inject(this, view);
 
         if (!TextUtils.isEmpty(mAlbumImg))
-            Picasso.with(getActivity()).load(mAlbumImg).into(icon);
+            Picasso.with(getActivity()).load(mAlbumImg).into(mIcon);
 
-        track.setText(mTrackName);
-        album.setText(mAlbumName);
+        mTrack.setText(mTrackName);
+        mAlbum.setText(mAlbumName);
 
         return view;
     }

@@ -21,8 +21,6 @@ import com.ubimobitech.spotifystreamer.adapters.TopTracksAdapter;
 public class TopTracksFragment extends ListFragment {
     private TopTracksAdapter mTracksAdapter;
 
-
-    // TODO: Rename and change types of parameters
     public static TopTracksFragment newInstance() {
         TopTracksFragment fragment = new TopTracksFragment();
         return fragment;

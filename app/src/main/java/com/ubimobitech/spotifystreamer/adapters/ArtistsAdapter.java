@@ -21,6 +21,8 @@ import com.ubimobitech.spotifystreamer.R;
 
 import java.util.List;
 
+import butterknife.ButterKnife;
+import butterknife.InjectView;
 import kaaes.spotify.webapi.android.models.Artist;
 import kaaes.spotify.webapi.android.models.Image;
 import kaaes.spotify.webapi.android.models.Pager;
@@ -96,10 +98,7 @@ public class ArtistsAdapter extends BaseAdapter {
             convertView = LayoutInflater.from(mContext).inflate(R.layout.artists_list_item, parent,
                     false);
 
-            holder = new ViewHolder();
-
-            holder.icon = (ImageView) convertView.findViewById(R.id.artist_icon);
-            holder.name = (TextView) convertView.findViewById(R.id.artist_name);
+            holder = new ViewHolder(convertView);
 
             convertView.setTag(holder);
         } else {
@@ -122,8 +121,12 @@ public class ArtistsAdapter extends BaseAdapter {
         return convertView;
     }
 
-    private static class ViewHolder {
-        ImageView icon;
-        TextView name;
+     static class ViewHolder {
+        @InjectView(R.id.artist_icon) ImageView icon;
+        @InjectView(R.id.artist_name) TextView name;
+
+        public  ViewHolder(View view) {
+            ButterKnife.inject(this, view);
+        }
     }
 }

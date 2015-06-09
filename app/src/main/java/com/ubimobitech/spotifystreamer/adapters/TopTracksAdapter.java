@@ -21,6 +21,8 @@ import com.ubimobitech.spotifystreamer.R;
 
 import java.util.List;
 
+import butterknife.ButterKnife;
+import butterknife.InjectView;
 import kaaes.spotify.webapi.android.models.Image;
 import kaaes.spotify.webapi.android.models.Track;
 import kaaes.spotify.webapi.android.models.Tracks;
@@ -96,11 +98,7 @@ public class TopTracksAdapter extends BaseAdapter {
             convertView = LayoutInflater.from(mContext).inflate(R.layout.top_tracks_list_item,
                     parent, false);
 
-            holder = new ViewHolder();
-
-            holder.icon = (ImageView) convertView.findViewById(R.id.album_icon);
-            holder.album = (TextView) convertView.findViewById(R.id.album_title);
-            holder.track = (TextView) convertView.findViewById(R.id.track_title);
+            holder = new ViewHolder(convertView);
 
             convertView.setTag(holder);
         } else {
@@ -124,9 +122,13 @@ public class TopTracksAdapter extends BaseAdapter {
         return convertView;
     }
 
-    private static class ViewHolder {
-        ImageView icon;
-        TextView track;
-        TextView album;
+    static class ViewHolder {
+        @InjectView(R.id.album_icon) ImageView icon;
+        @InjectView(R.id.track_title) TextView track;
+        @InjectView(R.id.album_title) TextView album;
+
+        public ViewHolder(View view) {
+            ButterKnife.inject(this, view);
+        }
     }
 }

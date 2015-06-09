@@ -19,6 +19,8 @@ import com.ubimobitech.spotifystreamer.interfaces.OnArtistClickListener;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
+import butterknife.ButterKnife;
+import butterknife.InjectView;
 import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.SpotifyService;
 import kaaes.spotify.webapi.android.models.Artist;
@@ -33,7 +35,7 @@ public class MainActivity extends AppCompatActivity implements OnArtistClickList
     private SpotifyService mSpotify;
     private String mQuery = "";
     private static ArtistsPager mArtistsPager;
-    private ProgressBar mProgressBar;
+    @InjectView(R.id.progress_bar) ProgressBar mProgressBar;
 
     private static final int SUCCESS = 0;
     private static final int FAILURE = -1;
@@ -45,7 +47,7 @@ public class MainActivity extends AppCompatActivity implements OnArtistClickList
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mProgressBar = (ProgressBar) findViewById(R.id.progress_bar);
+        ButterKnife.inject(this);
 
         mSpotifyApi = new SpotifyApi();
         mSpotify = mSpotifyApi.getService();
