@@ -37,11 +37,6 @@ public class MainActivity extends AppCompatActivity implements OnArtistClickList
     private static ArtistsPager mArtistsPager;
     @InjectView(R.id.progress_bar) ProgressBar mProgressBar;
 
-    private static final int SUCCESS = 0;
-    private static final int FAILURE = -1;
-
-    private static Handler mHandler = new Handler();
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -117,56 +112,49 @@ public class MainActivity extends AppCompatActivity implements OnArtistClickList
             public void success(ArtistsPager artistsPager, Response response) {
                 mArtistsPager = artistsPager;
 
-                // Start lengthy operation in a background thread
-                new Thread(new Runnable() {
+                MainActivity.this.runOnUiThread(new Runnable() {
+                    @Override
                     public void run() {
-                        mHandler.post(new Runnable() {
-                            public void run() {
-                                mProgressBar.setVisibility(View.GONE);
+                        mProgressBar.setVisibility(View.GONE);
 
-                                if (mArtistsPager != null && mArtistsPager.artists.total > 1) {
-                                    MainActivityFragment artistList = MainActivityFragment.newInstance(mQuery);
-                                    FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-                                    ft.replace(R.id.container, artistList);
-                                    ft.commit();
-                                } else if (mArtistsPager != null && mArtistsPager.artists.total == 1) {
-                                    Artist artist = mArtistsPager.artists.items.get(0);
-                                    String imgUrl = "";
+                        if (mArtistsPager != null && mArtistsPager.artists.total > 1) {
+                            MainActivityFragment artistList = MainActivityFragment.newInstance(mQuery);
+                            FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+                            ft.replace(R.id.container, artistList);
+                            ft.commit();
+                        } else if (mArtistsPager != null && mArtistsPager.artists.total == 1) {
+                            Artist artist = mArtistsPager.artists.items.get(0);
+                            String imgUrl = "";
 
-                                    if (artist.images.size() > 0)
-                                        imgUrl = artist.images.get(0).url;
+                            if (artist.images.size() > 0)
+                                imgUrl = artist.images.get(0).url;
 
-                                    SingleArtistFragment fragment = SingleArtistFragment.newInstance(artist.name,
-                                            imgUrl, artist.id);
-                                    FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-                                    ft.replace(R.id.container, fragment);
-                                    ft.commit();
-                                } else {
-                                    Toast.makeText(getApplicationContext(), R.string.no_artist_found,
-                                            Toast.LENGTH_SHORT).show();
-                                }
-                            }
-                        });
+                            SingleArtistFragment fragment = SingleArtistFragment.newInstance(artist.name,
+                                    imgUrl, artist.id);
+                            FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+                            ft.replace(R.id.container, fragment);
+                            ft.commit();
+                        } else {
+                            Toast.makeText(getApplicationContext(), R.string.no_artist_found,
+                                    Toast.LENGTH_SHORT).show();
+                        }
                     }
-                }).start();
+                });
             }
 
             @Override
             public void failure(RetrofitError error) {
                 final String msg = error.getMessage();
 
-                new Thread(new Runnable() {
-                    public void run() {
-                        mHandler.post(new Runnable() {
-                            public void run() {
-                                mProgressBar.setVisibility(View.GONE);
+               MainActivity.this.runOnUiThread(new Runnable() {
+                   @Override
+                   public void run() {
+                       mProgressBar.setVisibility(View.GONE);
 
-                                Toast.makeText(getApplicationContext(), msg,
-                                        Toast.LENGTH_SHORT).show();
-                            }
-                        });
-                    }
-                }).start();
+                       Toast.makeText(getApplicationContext(), msg,
+                               Toast.LENGTH_SHORT).show();
+                   }
+               });
             }
         });
     }

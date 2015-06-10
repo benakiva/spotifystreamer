@@ -13,6 +13,9 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.ubimobitech.spotifystreamer.model.TrackInfo;
+
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -33,9 +36,10 @@ public class TopTracksActivity extends AppCompatActivity {
 
     private SpotifyApi mSpotifyApi;
     private SpotifyService mSpotify;
-    private static Tracks mTracks;
     private ProgressBar mProgressBar;
-    private Handler mHandler = new Handler();
+    private ArrayList<TrackInfo> mTrackInfo;
+
+    private static final String STATE_TRACK_INFO = "state_track_info";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,7 +52,25 @@ public class TopTracksActivity extends AppCompatActivity {
         mSpotifyApi = new SpotifyApi();
         mSpotify = mSpotifyApi.getService();
 
-        getArtistTopTrack(getIntent().getStringExtra(ARTIST_ID_INTENT_EXTRA));
+        if (savedInstanceState != null) {
+            mTrackInfo = savedInstanceState.getParcelableArrayList(STATE_TRACK_INFO);
+            getSupportActionBar().setSubtitle(mTrackInfo.get(0).getArtistName());
+            startFragment();
+        } else {
+            getArtistTopTrack(getIntent().getStringExtra(ARTIST_ID_INTENT_EXTRA));
+        }
+    }
+
+    /**
+     * Save all appropriate fragment state.
+     *
+     * @param outState
+     */
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putParcelableArrayList(STATE_TRACK_INFO, mTrackInfo);
+
+        super.onSaveInstanceState(outState);
     }
 
     @Override
@@ -72,8 +94,8 @@ public class TopTracksActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    public Tracks getTopTracks() {
-        return mTracks;
+    public ArrayList<TrackInfo> getTopTracks() {
+        return mTrackInfo;
     }
 
     private void getArtistTopTrack(String artistId) {
@@ -94,52 +116,41 @@ public class TopTracksActivity extends AppCompatActivity {
              */
             @Override
             public void success(Tracks tracks, Response response) {
-                mTracks = tracks;
+                mTrackInfo = new ArrayList<TrackInfo>();
 
-                new Thread(new Runnable() {
+                if (tracks.tracks != null && tracks.tracks.size() > 0) {
+                    for (Track track : tracks.tracks) {
+                        TrackInfo info = new TrackInfo();
+
+                        if (track.artists.size() > 0)
+                            info.setArtistName(track.artists.get(0).name);
+                        else
+                            info.setArtistName("");
+
+                        List<Image> imgs = track.album.images;
+
+                        if (imgs.size() > 0)
+                            info.setImgUrl(imgs.get(0).url);
+                        else
+                            info.setImgUrl("");
+
+                        info.setAlbumName(track.album.name);
+                        info.setmTrackName(track.name);
+
+                        mTrackInfo.add(info);
+                    }
+                }
+
+                TopTracksActivity.this.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        mHandler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                mProgressBar.setVisibility(View.GONE);
+                        mProgressBar.setVisibility(View.GONE);
 
-                                String artistName = "";
+                        getSupportActionBar().setSubtitle(mTrackInfo.get(0).getArtistName());
 
-                                if (mTracks != null && mTracks.tracks.size() > 0) {
-                                    if (mTracks.tracks.get(0).artists.size() > 0)
-                                        artistName = mTracks.tracks.get(0).artists.get(0).name;
-                                }
-
-                                getSupportActionBar().setSubtitle(artistName);
-
-                                FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-
-                                if (mTracks != null && mTracks.tracks.size() > 1) {
-                                    TopTracksFragment fragment = TopTracksFragment.newInstance();
-                                    ft.replace(R.id.top_track_container, fragment);
-                                    ft.commit();
-                                } else if (mTracks != null && mTracks.tracks.size() == 1) {
-                                    Track track = mTracks.tracks.get(0);
-
-                                    List<Image> imgs = track.album.images;
-                                    String imgUrl = "";
-
-                                    if (imgs.size() > 0)
-                                        imgUrl = imgs.get(0).url;
-
-                                    SingleTopTrackFragment f = SingleTopTrackFragment.newInstance(track.name, imgUrl,
-                                            track.album.name);
-                                    ft.replace(R.id.top_track_container, f);
-                                    ft.commit();
-                                } else {
-                                    Toast.makeText(getApplicationContext(), R.string.no_artist_found,
-                                            Toast.LENGTH_SHORT).show();
-                                }
-                            }
-                        });
+                        startFragment();
                     }
-                }).start();
+                });
             }
 
             /**
@@ -152,19 +163,37 @@ public class TopTracksActivity extends AppCompatActivity {
             public void failure(RetrofitError error) {
                 final String msg = error.getMessage();
 
-                new Thread(new Runnable() {
+                TopTracksActivity.this.runOnUiThread(new Runnable() {
+                    @Override
                     public void run() {
-                        mHandler.post(new Runnable() {
-                            public void run() {
-                                mProgressBar.setVisibility(View.GONE);
+                        mProgressBar.setVisibility(View.GONE);
 
-                                Toast.makeText(getApplicationContext(), msg,
-                                        Toast.LENGTH_SHORT).show();
-                            }
-                        });
+                        Toast.makeText(getApplicationContext(), msg,
+                                Toast.LENGTH_SHORT).show();
                     }
-                }).start();
+                });
             }
         });
+    }
+
+    private void startFragment() {
+        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+
+        if (mTrackInfo != null && mTrackInfo.size() > 1) {
+            TopTracksFragment fragment = TopTracksFragment.newInstance();
+            ft.replace(R.id.top_track_container, fragment);
+            ft.commit();
+        } else if (mTrackInfo != null && mTrackInfo.size() == 1) {
+            TrackInfo trackInfo = mTrackInfo.get(0);
+
+            SingleTopTrackFragment f = SingleTopTrackFragment.newInstance(
+                    trackInfo.getmTrackName(), trackInfo.getImgUrl(),
+                    trackInfo.getAlbumName());
+            ft.replace(R.id.top_track_container, f);
+            ft.commit();
+        } else {
+            Toast.makeText(getApplicationContext(), R.string.no_artist_found,
+                    Toast.LENGTH_SHORT).show();
+        }
     }
 }

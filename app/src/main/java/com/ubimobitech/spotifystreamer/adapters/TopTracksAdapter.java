@@ -18,7 +18,9 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 import com.ubimobitech.spotifystreamer.R;
+import com.ubimobitech.spotifystreamer.model.TrackInfo;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.ButterKnife;
@@ -31,10 +33,10 @@ import kaaes.spotify.webapi.android.models.Tracks;
  * Created by benakiva on 09/06/15.
  */
 public class TopTracksAdapter extends BaseAdapter {
-    private Tracks mTracks;
+    private ArrayList<TrackInfo> mTracks;
     private Context mContext;
 
-    public TopTracksAdapter(Context context, Tracks tracks) {
+    public TopTracksAdapter(Context context, ArrayList<TrackInfo> tracks) {
         mContext = context;
         mTracks = tracks;
     }
@@ -46,7 +48,7 @@ public class TopTracksAdapter extends BaseAdapter {
      */
     @Override
     public int getCount() {
-        return mTracks.tracks.size();
+        return mTracks.size();
     }
 
     /**
@@ -58,7 +60,7 @@ public class TopTracksAdapter extends BaseAdapter {
      */
     @Override
     public Object getItem(int position) {
-        return mTracks.tracks.get(position);
+        return mTracks.get(position);
     }
 
     /**
@@ -105,19 +107,17 @@ public class TopTracksAdapter extends BaseAdapter {
             holder = (ViewHolder) convertView.getTag();
         }
 
-        Track track = (Track) getItem(position);
+        TrackInfo track = (TrackInfo) getItem(position);
 
-        List<Image> icons = track.album.images;
-
-        if (icons.size() > 0 && !TextUtils.isEmpty(icons.get(0).url)) {
-            Picasso.with(mContext).load(icons.get(0).url).into(holder.icon);
+        if (!TextUtils.isEmpty(track.getImgUrl())) {
+            Picasso.with(mContext).load(track.getImgUrl()).into(holder.icon);
             holder.icon.setVisibility(View.VISIBLE);
         } else {
             holder.icon.setVisibility(View.INVISIBLE);
         }
 
-        holder.album.setText(track.album.name);
-        holder.track.setText(track.name);
+        holder.album.setText(track.getAlbumName());
+        holder.track.setText(track.getmTrackName());
 
         return convertView;
     }
