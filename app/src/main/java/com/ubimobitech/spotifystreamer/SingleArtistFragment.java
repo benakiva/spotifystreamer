@@ -39,7 +39,7 @@ public class SingleArtistFragment extends Fragment implements View.OnClickListen
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
      *
-     * @param name Artist name.
+     * @param name ArtistInfo name.
      * @param imgUrl artist's icon url.
      * @return A new instance of fragment SingleArtistFragment.
      */
@@ -112,6 +112,6 @@ public class SingleArtistFragment extends Fragment implements View.OnClickListen
      */
     @Override
     public void onClick(View v) {
-        mListener.onArtistClick(mArtistId);
+        mListener.onArtistClick(mArtistId, mName);
     }
 }

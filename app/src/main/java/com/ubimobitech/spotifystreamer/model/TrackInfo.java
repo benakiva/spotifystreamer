@@ -18,6 +18,8 @@ public class TrackInfo implements Parcelable {
     private String mArtistName;
     private String mTrackName;
     private String mImgUrl;
+    private String mPreviewUrl;
+    private long mDuration_ms;
 
     public TrackInfo() {
 
@@ -35,6 +37,14 @@ public class TrackInfo implements Parcelable {
         return mImgUrl;
     }
 
+    public String getPreviewUrl() {
+        return mPreviewUrl;
+    }
+
+    public long getDuration() {
+        return mDuration_ms;
+    }
+
     public void setAlbumName(String albumName) {
         this.mAlbumName = albumName;
     }
@@ -47,12 +57,20 @@ public class TrackInfo implements Parcelable {
         this.mImgUrl = imgUrl;
     }
 
-    public String getmTrackName() {
+    public String getTrackName() {
         return mTrackName;
     }
 
-    public void setmTrackName(String mTrackName) {
-        this.mTrackName = mTrackName;
+    public void setTrackName(String trackName) {
+        this.mTrackName = trackName;
+    }
+
+    public void setPreviewUrl(String previewUrl) {
+        mPreviewUrl = previewUrl;
+    }
+
+    public void setDuration(long duration) {
+        mDuration_ms = duration;
     }
 
     public int describeContents() {
@@ -64,6 +82,8 @@ public class TrackInfo implements Parcelable {
         out.writeString(mArtistName);
         out.writeString(mTrackName);
         out.writeString(mImgUrl);
+        out.writeString(mPreviewUrl);
+        out.writeLong(mDuration_ms);
     }
 
     public static final Parcelable.Creator<TrackInfo> CREATOR
@@ -82,5 +102,12 @@ public class TrackInfo implements Parcelable {
         mArtistName = in.readString();
         mTrackName = in.readString();
         mImgUrl = in.readString();
+        mPreviewUrl = in.readString();
+        mDuration_ms = in.readLong();
+    }
+
+    public String getFormattedDuration() {
+        long seconds = (mDuration_ms / 1000) + 1;
+        return String.format("%d:%02d", seconds / 60, seconds % 60);
     }
 }

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="bottom"
+    android:paddingRight="16dp"
+    android:paddingLeft="16dp"
+    >
+
+    <ImageButton
+        android:id="@+id/previous"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@null"
+        android:layout_weight="1"
+        android:src="@drawable/ic_skip_previous_black_48dp"
+        />
+
+    <ImageButton
+        android:id="@+id/play_pause"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@null"
+        android:layout_weight="1"
+        android:src="@drawable/ic_play_circle_filled_black_48dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        />
+
+    <ImageButton
+        android:id="@+id/next"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@null"
+        android:layout_weight="1"
+        android:src="@drawable/ic_skip_next_black_48dp"
+        />
+</LinearLayout>

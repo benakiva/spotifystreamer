@@ -11,5 +11,5 @@ package com.ubimobitech.spotifystreamer.interfaces;
  * Created by benakiva on 09/06/15.
  */
 public interface OnArtistClickListener {
-    void onArtistClick(String id);
+    void onArtistClick(String id, String name);
 }

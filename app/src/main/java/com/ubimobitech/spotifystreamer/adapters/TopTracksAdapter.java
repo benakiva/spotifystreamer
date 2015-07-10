@@ -21,13 +21,9 @@ import com.ubimobitech.spotifystreamer.R;
 import com.ubimobitech.spotifystreamer.model.TrackInfo;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
-import kaaes.spotify.webapi.android.models.Image;
-import kaaes.spotify.webapi.android.models.Track;
-import kaaes.spotify.webapi.android.models.Tracks;
 
 /**
  * Created by benakiva on 09/06/15.
@@ -117,7 +113,7 @@ public class TopTracksAdapter extends BaseAdapter {
         }
 
         holder.album.setText(track.getAlbumName());
-        holder.track.setText(track.getmTrackName());
+        holder.track.setText(track.getTrackName());
 
         return convertView;
     }

@@ -1,0 +1,32 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:tools="http://schemas.android.com/tools"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:baselineAligned="false"
+              android:divider="?android:attr/dividerHorizontal"
+              android:orientation="horizontal"
+              tools:context="com.ubimobitech.spotifystreamer.MainActivity">
+
+    <!--
+    This layout is a two-pane layout for the Spotify Streamer master/detail flow.
+    -->
+    <fragment
+        android:id="@+id/container"
+        android:name="com.ubimobitech.spotifystreamer.ArtistsFragment"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="3"
+        tools:layout="@android:layout/list_content" />
+
+    <View
+        android:layout_width="2dp"
+        android:layout_height="wrap_content"
+        android:background="@color/divider_line"
+        />
+    <FrameLayout
+        android:id="@+id/top_track_container"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="4" />
+
+</LinearLayout>

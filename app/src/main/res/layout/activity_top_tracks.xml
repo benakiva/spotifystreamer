@@ -1,14 +1,10 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             android:id="@+id/top_track_container"
-             android:layout_width="match_parent"
-             android:layout_height="match_parent">
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/top_track_container"
+    android:name="com.ubimobitech.spotifystreamer.TopTracksFragment"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.ubimobitech.spotifystreamer.TopTracksActivity"
+    tools:ignore="MergeRootFrame"
+    />
 
-    <ProgressBar
-        android:id="@+id/progress_bar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        style="@android:style/Widget.ProgressBar.Small"
-        android:visibility="gone"
-        android:layout_gravity="center"
-        android:layout_marginRight="5dp" />
-</FrameLayout>

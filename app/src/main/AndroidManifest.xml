@@ -3,6 +3,9 @@
     package="com.ubimobitech.spotifystreamer" >
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:allowBackup="true"
@@ -26,6 +29,27 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.ubimobitech.spotifystreamer.MainActivity" />
         </activity>
+        <activity android:name=".PlaybackActivity"
+                  android:launchMode="singleTask"
+                  android:clearTaskOnLaunch="true"
+                  android:excludeFromRecents="true"
+            >
+        </activity>
+
+        <service
+            android:name=".service.MusicService"
+            android:enabled="true"
+            android:exported="false" >
+        </service>
+
+        <receiver
+            android:name=".MusicIntentReceiver"
+            android:enabled="true"
+            android:exported="false" >
+            <intent-filter>
+                <action android:name="android.media.AUDIO_BECOMING_NOISY" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

@@ -18,23 +18,21 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 import com.ubimobitech.spotifystreamer.R;
+import com.ubimobitech.spotifystreamer.model.ArtistInfo;
 
 import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
-import kaaes.spotify.webapi.android.models.Artist;
-import kaaes.spotify.webapi.android.models.Image;
-import kaaes.spotify.webapi.android.models.Pager;
 
 /**
  * Created by benakiva on 08/06/15.
  */
 public class ArtistsAdapter extends BaseAdapter {
-    private Pager<Artist> mArtistsPager;
+    private List<ArtistInfo> mArtistsPager;
     private Context mContext;
 
-    public ArtistsAdapter(Context context, Pager<Artist> artists) {
+    public ArtistsAdapter(Context context, List<ArtistInfo> artists) {
         mContext = context;
         mArtistsPager = artists;
     }
@@ -46,7 +44,7 @@ public class ArtistsAdapter extends BaseAdapter {
      */
     @Override
     public int getCount() {
-        return mArtistsPager.items.size();
+        return mArtistsPager.size();
     }
 
     /**
@@ -58,7 +56,7 @@ public class ArtistsAdapter extends BaseAdapter {
      */
     @Override
     public Object getItem(int position) {
-        return mArtistsPager.items.get(position);
+        return mArtistsPager.get(position);
     }
 
     /**
@@ -105,18 +103,16 @@ public class ArtistsAdapter extends BaseAdapter {
             holder = (ViewHolder) convertView.getTag();
         }
 
-        Artist artist = (Artist) getItem(position);
+        ArtistInfo artist = (ArtistInfo) getItem(position);
 
-        List<Image> icons = artist.images;
-
-        if (icons.size() > 0 && !TextUtils.isEmpty(icons.get(0).url)) {
-            Picasso.with(mContext).load(icons.get(0).url).into(holder.icon);
+        if (!TextUtils.isEmpty(artist.getIconUrl())) {
+            Picasso.with(mContext).load(artist.getIconUrl()).into(holder.icon);
             holder.icon.setVisibility(View.VISIBLE);
         } else {
             holder.icon.setVisibility(View.INVISIBLE);
         }
 
-        holder.name.setText(artist.name);
+        holder.name.setText(artist.getName());
 
         return convertView;
     }
