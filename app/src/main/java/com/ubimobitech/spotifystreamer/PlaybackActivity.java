@@ -51,6 +51,7 @@ public class PlaybackActivity extends AppCompatActivity implements View.OnClickL
     private IMusicServiceAidlInterface mService;
     private Handler updateHandler = new Handler();
     private int mCurrentPosition;
+    private boolean mIsLargeLayout;
 
     private ServiceConnection mConnection = new ServiceConnection() {
         @Override
@@ -77,6 +78,8 @@ public class PlaybackActivity extends AppCompatActivity implements View.OnClickL
         super.onCreate(savedInstanceState);
         setContentView(R.layout.media_playback_screen);
         ButterKnife.inject(this);
+
+        mIsLargeLayout = getResources().getBoolean(R.bool.large_layout);
 
         Intent intent = getIntent();
 

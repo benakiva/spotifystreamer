@@ -216,7 +216,9 @@ public class LocalPlayback implements Playback, MediaPlayer.OnPreparedListener,
             releaseResources(false);
             giveUpAudioFocus();
         }
+
         mState = STATE_PAUSED;
+
         if (mCallback != null) {
             mCallback.onPlaybackStatusChanged(mState);
         }

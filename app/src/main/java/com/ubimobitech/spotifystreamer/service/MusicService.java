@@ -26,7 +26,7 @@ public class MusicService extends Service implements Playback.Callback {
     public static final String CMD_NAME = "CMD_NAME";
     public static final String CMD_PAUSE = "CMD_PAUSE";
 
-    private List<TrackInfo> mQueue = new ArrayList<>();
+    private ArrayList<TrackInfo> mQueue = new ArrayList<>();
     private static int mCurrentPosition = 0;
 
     private static final String TAG = MusicService.class.getSimpleName();
@@ -215,7 +215,7 @@ public class MusicService extends Service implements Playback.Callback {
     }
     private void setupForeground(TrackInfo track) {
         Intent intent = new Intent(getApplicationContext(), PlaybackActivity.class);
-        intent.putExtra(PlaybackActivity.TRACK_INFO_INTENT_EXTRA, track);
+        intent.putParcelableArrayListExtra(PlaybackActivity.TRACK_INFO_INTENT_EXTRA, mQueue);
         intent.putExtra(PlaybackActivity.TRACK_POSITION_INTENT_EXTRA, mCurrentPosition);
 
         PendingIntent pi = PendingIntent.getActivity(getApplicationContext(), 0,

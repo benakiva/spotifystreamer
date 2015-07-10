@@ -2,6 +2,7 @@ package com.ubimobitech.spotifystreamer;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.v4.app.ListFragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,6 +10,7 @@ import android.view.ViewGroup;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.ubimobitech.spotifystreamer.adapters.ArtistsAdapter;
 import com.ubimobitech.spotifystreamer.adapters.TopTracksAdapter;
 import com.ubimobitech.spotifystreamer.model.TrackInfo;
 import com.ubimobitech.spotifystreamer.sync.SpotifyDataFetcher;
@@ -33,6 +35,16 @@ public class TopTracksFragment extends ListFragment implements Callback<Tracks> 
     private TopTracksAdapter mTracksAdapter;
     private SpotifyDataFetcher mDataFetcher;
     private ArrayList<TrackInfo> mTrackInfo;
+
+    private static final String LIST_STATE_KEY = "listState";
+    private static final String LIST_POSITION_KEY = "listPosition";
+    private static final String ITEM_POSITION_KEY = "itemPosition";
+    private static final String LIST_STATE = "list_state";
+    private ListView mListView;
+
+    private Parcelable mListState = null;
+    private int mListPosition = 0;
+    private int mItemPosition = 0;
 
     public interface OnTrackClickListener {
         void onTrackClick(ArrayList<TrackInfo> track, int position);
@@ -90,6 +102,25 @@ public class TopTracksFragment extends ListFragment implements Callback<Tracks> 
         setRetainInstance(true);
     }
 
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        mListState = mListView.onSaveInstanceState();
+        outState.putParcelable(LIST_STATE_KEY, mListState);
+
+        // Save position of first visible item
+        mListPosition = mListView.getFirstVisiblePosition();
+        outState.putInt(LIST_POSITION_KEY, mListPosition);
+
+        // Save scroll position of item
+        View itemView = mListView.getChildAt(0);
+        mItemPosition = itemView == null ? 0 : itemView.getTop();
+        outState.putInt(ITEM_POSITION_KEY, mItemPosition);
+
+        outState.putParcelableArrayList(LIST_STATE, mTrackInfo);
+
+        super.onSaveInstanceState(outState);
+    }
+
     /**
      * Provide default implementation to return a simple list view.  Subclasses
      * can override to replace with their own layout.  If doing so, the
@@ -112,11 +143,30 @@ public class TopTracksFragment extends ListFragment implements Callback<Tracks> 
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_top_track, container, false);
 
-        mDataFetcher = SpotifyDataFetcher.getInstance(getActivity());
-        Bundle args = getArguments();
+        mListView = (ListView)view.findViewById(android.R.id.list);
 
-        if (args != null) {
-            mDataFetcher.getTopTracks(args.getString(TopTracksActivity.ARTIST_ID_INTENT_EXTRA), this);
+        if (savedInstanceState != null) {
+            mListState = savedInstanceState.getParcelable(LIST_STATE_KEY);
+            mListPosition = savedInstanceState.getInt(LIST_POSITION_KEY);
+            mItemPosition = savedInstanceState.getInt(ITEM_POSITION_KEY);
+
+            mTrackInfo = savedInstanceState.getParcelableArrayList(LIST_STATE);
+
+            mTracksAdapter = new TopTracksAdapter(getActivity(),
+                    mTrackInfo);
+            mListView.setAdapter(mTracksAdapter);
+
+            if (mListState != null)
+                mListView.onRestoreInstanceState(mListState);
+
+            mListView.setSelectionFromTop(mListPosition, mItemPosition);
+        } else {
+            mDataFetcher = SpotifyDataFetcher.getInstance(getActivity());
+            Bundle args = getArguments();
+
+            if (args != null) {
+                mDataFetcher.getTopTracks(args.getString(TopTracksActivity.ARTIST_ID_INTENT_EXTRA), this);
+            }
         }
 
         return view;
@@ -169,6 +219,11 @@ public class TopTracksFragment extends ListFragment implements Callback<Tracks> 
                 @Override
                 public void run() {
                     setListAdapter(mTracksAdapter);
+
+                    if (mListState != null)
+                        mListView.onRestoreInstanceState(mListState);
+
+                    mListView.setSelectionFromTop(mListPosition, mItemPosition);
                 }
             });
         }
