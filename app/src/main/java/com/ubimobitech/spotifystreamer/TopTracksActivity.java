@@ -10,9 +10,8 @@ import android.view.MenuItem;
 import com.ubimobitech.spotifystreamer.model.TrackInfo;
 
 import java.util.ArrayList;
-import java.util.List;
 
-public class TopTracksActivity extends AppCompatActivity implements TopTracksFragment.OnTrackCliclListener {
+public class TopTracksActivity extends AppCompatActivity implements TopTracksFragment.OnTrackClickListener {
     public static final String ARTIST_ID_INTENT_EXTRA =
             "com.ubimobitech.spotifystreamer.ARTIST_ID_INTENT_EXTRA";
 

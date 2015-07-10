@@ -3,6 +3,7 @@ package com.ubimobitech.spotifystreamer;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -15,9 +16,11 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.ubimobitech.spotifystreamer.interfaces.OnArtistClickListener;
+import com.ubimobitech.spotifystreamer.model.TrackInfo;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -29,7 +32,8 @@ import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
 
-public class MainActivity extends AppCompatActivity implements OnArtistClickListener {
+public class MainActivity extends AppCompatActivity implements OnArtistClickListener,
+        TopTracksFragment.OnTrackClickListener {
     private static final String TAG = MainActivity.class.getSimpleName();
 
     private boolean mTwoPane;
@@ -71,5 +75,19 @@ public class MainActivity extends AppCompatActivity implements OnArtistClickList
             intent.putExtra(TopTracksActivity.ARTIST_NAME_INTENT_EXTRA, name);
             startActivity(intent);
         }
+    }
+
+    @Override
+    public void onTrackClick(ArrayList<TrackInfo> track, int position) {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        PlaybackFragment newFragment = PlaybackFragment.newInstance(track, position);
+        newFragment.show(fragmentManager, "playback");
+
+        /*
+        Intent intent = new Intent(this, PlaybackActivity.class);
+        intent.putParcelableArrayListExtra(PlaybackActivity.TRACK_INFO_INTENT_EXTRA, track);
+        intent.putExtra(PlaybackActivity.TRACK_POSITION_INTENT_EXTRA, position);
+        startActivity(intent);
+         */
     }
 }

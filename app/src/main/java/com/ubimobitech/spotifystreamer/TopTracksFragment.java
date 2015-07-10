@@ -34,11 +34,11 @@ public class TopTracksFragment extends ListFragment implements Callback<Tracks> 
     private SpotifyDataFetcher mDataFetcher;
     private ArrayList<TrackInfo> mTrackInfo;
 
-    public interface OnTrackCliclListener {
+    public interface OnTrackClickListener {
         void onTrackClick(ArrayList<TrackInfo> track, int position);
     }
 
-    private OnTrackCliclListener mListener;
+    private OnTrackClickListener mListener;
 
     public static TopTracksFragment newInstance(final String artistId) {
         TopTracksFragment fragment = new TopTracksFragment();
@@ -67,10 +67,10 @@ public class TopTracksFragment extends ListFragment implements Callback<Tracks> 
         super.onAttach(activity);
 
         try {
-            mListener = (OnTrackCliclListener) activity;
+            mListener = (OnTrackClickListener) activity;
         } catch (ClassCastException e) {
             throw new ClassCastException(activity.toString()
-                    + " must implement OnTrackCliclListener");
+                    + " must implement OnTrackClickListener");
         }
     }
 

@@ -1,18 +1,42 @@
+/*
+ * Copyright 2015, Isaac Ben-Akiva
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/**
+ * FILE: PlaybackFragment.java
+ * AUTHOR: Dr. Isaac Ben-Akiva <isaac.ben-akiva@ubimobitech.com>
+ * <p/>
+ * CREATED ON: 10/07/15
+ */
+
 package com.ubimobitech.spotifystreamer;
 
+import android.app.Dialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
-import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
+import android.support.v4.app.DialogFragment;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
@@ -28,29 +52,32 @@ import java.util.ArrayList;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 
-public class PlaybackActivity extends AppCompatActivity implements View.OnClickListener {
-    public static final String TRACK_INFO_INTENT_EXTRA =
-            "com.ubimobitech.spotifystreamer.TRACK_INFO_INTENT_EXTRA";
-    public static final String TRACK_POSITION_INTENT_EXTRA =
-            "com.ubimobitech.spotifystreamer.TRACK_POSITION_INTENT_EXTRA";
+/**
+ * Created by benakiva on 10/07/15.
+ */
+public class PlaybackFragment extends DialogFragment implements View.OnClickListener {
+    private static final String TAG = PlaybackFragment.class.getSimpleName();
+    public static final String TRACKS_ARGS = "tracks_args";
+    public static final String POSITION_ARGS = "position_args";
 
-    private static final String TAG = PlaybackActivity.class.getSimpleName();
-
-    @InjectView(R.id.artist) TextView mArtistName;
+    @InjectView(R.id.artist)
+    TextView mArtistName;
     @InjectView(R.id.album_title) TextView mAlbumTitle;
-    @InjectView(R.id.album_icon) ImageView mAlbumIcon;
+    @InjectView(R.id.album_icon)
+    ImageView mAlbumIcon;
     @InjectView(R.id.song_title) TextView mSongName;
-    @InjectView(R.id.music_progress_bar) SeekBar mProgressBar;
+    @InjectView(R.id.music_progress_bar)
+    SeekBar mProgressBar;
     @InjectView(R.id.time_progress) TextView mTimeProgress;
     @InjectView(R.id.song_duration) TextView mDuration;
     @InjectView(R.id.previous) ImageButton mPrevious;
     @InjectView(R.id.play_pause) ImageButton mPlayPause;
     @InjectView(R.id.next) ImageButton mNext;
 
-    private ArrayList<TrackInfo> mTrackInfo = null;
+    private ArrayList<TrackInfo> mTrackInfo;
+    private int mCurrentPosition;
     private IMusicServiceAidlInterface mService;
     private Handler updateHandler = new Handler();
-    private int mCurrentPosition;
 
     private ServiceConnection mConnection = new ServiceConnection() {
         @Override
@@ -72,32 +99,50 @@ public class PlaybackActivity extends AppCompatActivity implements View.OnClickL
         }
     };
 
+    public static PlaybackFragment newInstance(ArrayList<TrackInfo> tracks, int position) {
+        PlaybackFragment fragment = new PlaybackFragment();
+
+
+        Bundle args = new Bundle();
+        args.putParcelableArrayList(TRACKS_ARGS, tracks);
+        args.putInt(POSITION_ARGS, position);
+
+        fragment.setArguments(args);
+
+        return fragment;
+    }
+
+    public PlaybackFragment() {}
+
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.media_playback_screen);
-        ButterKnife.inject(this);
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.media_playback_screen, container, false);
 
-        Intent intent = getIntent();
+        ButterKnife.inject(this, view);
 
-        if (intent != null) {
-            mTrackInfo = intent.getParcelableArrayListExtra(TRACK_INFO_INTENT_EXTRA);
-            mCurrentPosition = intent.getIntExtra(TRACK_POSITION_INTENT_EXTRA, 0);
+        Bundle args = getArguments();
+
+        if (args != null) {
+            mTrackInfo = args.getParcelableArrayList(TRACKS_ARGS);
+            mCurrentPosition = args.getInt(POSITION_ARGS);
+
+            updatePlaybackScreen(mCurrentPosition);
         }
-
-        updatePlaybackScreen(mCurrentPosition);
 
         mPlayPause.setOnClickListener(this);
         mNext.setOnClickListener(this);
         mPrevious.setOnClickListener(this);
+
+        return view;
     }
 
     @Override
-    protected void onStop() {
+    public void onStop() {
         super.onStop();
 
         if (mConnection != null)
-            unbindService(mConnection);
+            getActivity().unbindService(mConnection);
     }
 
     /**
@@ -105,35 +150,21 @@ public class PlaybackActivity extends AppCompatActivity implements View.OnClickL
      * now started.
      */
     @Override
-    protected void onStart() {
+    public void onStart() {
         super.onStart();
 
-        Intent intent = new Intent(this, MusicService.class);
+        Intent intent = new Intent(getActivity(), MusicService.class);
 
-        startService(intent);
-        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+        getActivity().startService(intent);
+        getActivity().bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
     }
 
+    /** The system calls this only when creating the layout in a dialog. */
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_playback, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
+    public Dialog onCreateDialog(Bundle savedInstanceState) {
+        Dialog dialog = super.onCreateDialog(savedInstanceState);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        return dialog;
     }
 
     /**
@@ -226,7 +257,7 @@ public class PlaybackActivity extends AppCompatActivity implements View.OnClickL
             TrackInfo track = mTrackInfo.get(position);
 
             mArtistName.setText(track.getArtistName());
-            Picasso.with(this).load(track.getImgUrl()).into(mAlbumIcon);
+            Picasso.with(getActivity()).load(track.getImgUrl()).into(mAlbumIcon);
             mAlbumTitle.setText(track.getAlbumName());
             mSongName.setText(track.getTrackName());
             mDuration.setText(track.getFormattedDuration());
