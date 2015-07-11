@@ -4,11 +4,20 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
+import android.media.session.PlaybackState;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.support.v4.app.NotificationCompat;
+import android.util.Log;
 
+import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
 import com.ubimobitech.spotifystreamer.model.IMusicServiceAidlInterface;
 import com.ubimobitech.spotifystreamer.LocalPlayback;
 import com.ubimobitech.spotifystreamer.Playback;
@@ -16,6 +25,7 @@ import com.ubimobitech.spotifystreamer.PlaybackActivity;
 import com.ubimobitech.spotifystreamer.R;
 import com.ubimobitech.spotifystreamer.model.TrackInfo;
 
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +36,16 @@ public class MusicService extends Service implements Playback.Callback {
     public static final String CMD_NAME = "CMD_NAME";
     public static final String CMD_PAUSE = "CMD_PAUSE";
 
+    public static final String ACTION_PAUSE = "com.ubimobitech.spotifystreamer.service.pause";
+    public static final String ACTION_PLAY = "com.ubimobitech.spotifystreamer.service.play";
+    public static final String ACTION_PREV = "com.ubimobitech.spotifystreamer.service.prev";
+    public static final String ACTION_NEXT = "com.ubimobitech.spotifystreamer.service.next";
+
+    private PendingIntent mPauseIntent;
+    private PendingIntent mPlayIntent;
+    private PendingIntent mPreviousIntent;
+    private PendingIntent mNextIntent;
+
     private ArrayList<TrackInfo> mQueue = new ArrayList<>();
     private static int mCurrentPosition = 0;
 
@@ -33,8 +53,10 @@ public class MusicService extends Service implements Playback.Callback {
     private LocalPlayback mPlayback = null;
     private NotificationManager mNotificationManager;
     private Notification mNotification = null;
+    private NotificationCompat.Builder mBuilder;
 
-    private final int NOTIFICATION_ID = 1;
+    private final int NOTIFICATION_ID = 251225;
+    private static final int REQUEST_CODE = 89;
 
     private final IBinder mBinder = new ServiceStub(this);
 
@@ -58,6 +80,25 @@ public class MusicService extends Service implements Playback.Callback {
         mPlayback = new LocalPlayback(this);
         mPlayback.setState(LocalPlayback.STATE_NONE);
         mPlayback.setCallback(this);
+
+        String pkg = getPackageName();
+
+        mPauseIntent = PendingIntent.getBroadcast(getApplicationContext(), REQUEST_CODE,
+                new Intent(ACTION_PAUSE).setPackage(pkg), PendingIntent.FLAG_CANCEL_CURRENT);
+        mPlayIntent = PendingIntent.getBroadcast(getApplicationContext(), REQUEST_CODE,
+                new Intent(ACTION_PLAY).setPackage(pkg), PendingIntent.FLAG_CANCEL_CURRENT);
+        mPreviousIntent = PendingIntent.getBroadcast(getApplicationContext(), REQUEST_CODE,
+                new Intent(ACTION_PREV).setPackage(pkg), PendingIntent.FLAG_CANCEL_CURRENT);
+        mNextIntent = PendingIntent.getBroadcast(getApplicationContext(), REQUEST_CODE,
+                new Intent(ACTION_NEXT).setPackage(pkg), PendingIntent.FLAG_CANCEL_CURRENT);
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(ACTION_NEXT);
+        filter.addAction(ACTION_PAUSE);
+        filter.addAction(ACTION_PLAY);
+        filter.addAction(ACTION_PREV);
+
+        registerReceiver(mActionReceiver, filter);
     }
 
     @Override
@@ -76,6 +117,8 @@ public class MusicService extends Service implements Playback.Callback {
     public void onDestroy() {
         if (mPlayback != null)
             mPlayback.stop();
+
+        unregisterReceiver(mActionReceiver);
 
         super.onDestroy();
     }
@@ -213,6 +256,7 @@ public class MusicService extends Service implements Playback.Callback {
         mPlayback.stop();
         stopSelf();
     }
+
     private void setupForeground(TrackInfo track) {
         Intent intent = new Intent(getApplicationContext(), PlaybackActivity.class);
         intent.putParcelableArrayListExtra(PlaybackActivity.TRACK_INFO_INTENT_EXTRA, mQueue);
@@ -222,16 +266,63 @@ public class MusicService extends Service implements Playback.Callback {
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT);
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext())
-                .setSmallIcon(R.drawable.ic_stat_playing)
+        mBuilder = new NotificationCompat.Builder(getApplicationContext())
+                .setSmallIcon(R.drawable.ic_notification)
+                .setVisibility(Notification.VISIBILITY_PUBLIC)
                 .setContentTitle(track.getTrackName())
                 .setContentText(track.getArtistName())
+                .setSubText(track.getAlbumName())
                 .setContentIntent(pi);
 
-        mNotification = builder.build();
+        mBuilder.addAction(R.drawable.ic_skip_previous_white_24dp,
+                null, mPreviousIntent);
 
-        mNotificationManager.notify(NOTIFICATION_ID, mNotification);
-        startForeground(NOTIFICATION_ID, mNotification);
+        addPlayPauseAction(mBuilder);
+
+        mBuilder.addAction(R.drawable.ic_skip_next_white_24dp,
+                null, mNextIntent);
+
+        mNotification = mBuilder.build();
+
+        Target target = new Target() {
+            @Override
+            public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+                mBuilder.setLargeIcon(bitmap);
+                mNotification = mBuilder.build();
+
+                mNotificationManager.notify(NOTIFICATION_ID, mNotification);
+                startForeground(NOTIFICATION_ID, mNotification);
+            }
+
+            @Override
+            public void onBitmapFailed(Drawable errorDrawable) {
+
+            }
+
+            @Override
+            public void onPrepareLoad(Drawable placeHolderDrawable) {
+
+            }
+        };
+
+        Picasso.with(getApplicationContext()).load(track.getImgUrl()).into(target);
+
+    }
+
+    private void addPlayPauseAction(NotificationCompat.Builder builder) {
+        int icon;
+        PendingIntent intent;
+        int state = mPlayback.getState();
+
+        if ((state == LocalPlayback.STATE_PLAYING) || state == LocalPlayback.STATE_BUFFERING) {
+            icon = R.drawable.uamp_ic_pause_white_24dp;
+            intent = mPauseIntent;
+        } else {
+            icon = R.drawable.uamp_ic_play_arrow_white_24dp;
+            intent = mPlayIntent;
+        }
+
+        builder.addAction(icon, null, intent);
     }
 
     /**
@@ -329,4 +420,27 @@ public class MusicService extends Service implements Playback.Callback {
             return mService.get().getArtistName();
         }
     }
+
+    private BroadcastReceiver mActionReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final String action = intent.getAction();
+            switch (action) {
+                case ACTION_PAUSE:
+                    pause();
+                    break;
+                case ACTION_PLAY:
+                    play(mQueue.get(mCurrentPosition), mCurrentPosition);
+                    break;
+                case ACTION_NEXT:
+                    next();
+                    break;
+                case ACTION_PREV:
+                    prev();
+                    break;
+                default:
+                    Log.w(TAG, "Unknown intent ignored. Action= " + action);
+            }
+        }
+    };
 }
