@@ -69,6 +69,8 @@ public class TopTracksActivity extends AppCompatActivity implements TopTracksFra
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_settings:
+                Intent intent = new Intent(this, UserPreferencesActivity.class);
+                startActivity(intent);
                 return true;
             case android.R.id.home:
                 NavUtils.navigateUpFromSameTask(this);

@@ -8,6 +8,10 @@
 package com.ubimobitech.spotifystreamer.sync;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
+
+import com.ubimobitech.spotifystreamer.R;
 
 import java.util.HashMap;
 import java.util.Locale;
@@ -48,9 +52,10 @@ public class SpotifyDataFetcher {
 
     public void getTopTracks(final String artistId, Callback<Tracks> callback) {
         Map countryCode = new HashMap<String, String>();
-        Locale current = mContext.getResources().getConfiguration().locale;
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
 
-        countryCode.put("country", current.getCountry());
+        countryCode.put("country", prefs.getString("pref_countryCode",
+                mContext.getString(R.string.pref_default_country)));
 
         mSpotify.getArtistTopTrack(artistId, countryCode, callback);
     }

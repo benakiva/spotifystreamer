@@ -4,10 +4,13 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.v4.app.ListFragment;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
+import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.ubimobitech.spotifystreamer.adapters.ArtistsAdapter;
@@ -145,6 +148,26 @@ public class TopTracksFragment extends ListFragment implements Callback<Tracks> 
 
         mListView = (ListView)view.findViewById(android.R.id.list);
 
+        return view;
+    }
+
+    /**
+     * Called when the fragment's activity has been created and this
+     * fragment's view hierarchy instantiated.  It can be used to do final
+     * initialization once these pieces are in place, such as retrieving
+     * views or restoring state.  It is also useful for fragments that use
+     * {@link #setRetainInstance(boolean)} to retain their instance,
+     * as this callback tells the fragment when it is fully associated with
+     * the new activity instance.  This is called after {@link #onCreateView}
+     * and before {@link #onViewStateRestored(Bundle)}.
+     *
+     * @param savedInstanceState If the fragment is being re-created from
+     *                           a previous saved state, this is the state.
+     */
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
         if (savedInstanceState != null) {
             mListState = savedInstanceState.getParcelable(LIST_STATE_KEY);
             mListPosition = savedInstanceState.getInt(LIST_POSITION_KEY);
@@ -168,8 +191,6 @@ public class TopTracksFragment extends ListFragment implements Callback<Tracks> 
                 mDataFetcher.getTopTracks(args.getString(TopTracksActivity.ARTIST_ID_INTENT_EXTRA), this);
             }
         }
-
-        return view;
     }
 
     @Override

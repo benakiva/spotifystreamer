@@ -1,6 +1,7 @@
 package com.ubimobitech.spotifystreamer;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.v4.app.Fragment;
@@ -26,7 +27,6 @@ import com.ubimobitech.spotifystreamer.sync.SpotifyDataFetcher;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
-import java.util.List;
 
 import kaaes.spotify.webapi.android.models.Artist;
 import kaaes.spotify.webapi.android.models.ArtistsPager;
@@ -56,7 +56,7 @@ public class ArtistsFragment extends Fragment implements Callback<ArtistsPager> 
     private int mItemPosition = 0;
 
     private OnArtistClickListener mListener;
-    private ArrayList<ArtistInfo> mArtistsList;
+    private ArrayList<ArtistInfo> mArtistsList = new ArrayList<>();
     private SpotifyDataFetcher mDataFetcher;
 
     public static ArtistsFragment newInstance(String query) {
@@ -203,6 +203,34 @@ public class ArtistsFragment extends Fragment implements Callback<ArtistsPager> 
                 return true;
             }
         });
+    }
+
+    /**
+     * This hook is called whenever an item in your options menu is selected.
+     * The default implementation simply returns false to have the normal
+     * processing happen (calling the item's Runnable or sending a message to
+     * its Handler as appropriate).  You can use this method for any items
+     * for which you would like to do processing without those other
+     * facilities.
+     * <p/>
+     * <p>Derived classes should call through to the base class for it to
+     * perform the default menu handling.
+     *
+     * @param item The menu item that was selected.
+     * @return boolean Return false to allow normal menu processing to
+     * proceed, true to consume it here.
+     * @see #onCreateOptionsMenu
+     */
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.action_settings) {
+            Intent intent = new Intent(getActivity(), UserPreferencesActivity.class);
+            getActivity().startActivity(intent);
+
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
     public static String urlEncode(String data) {

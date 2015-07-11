@@ -82,12 +82,5 @@ public class MainActivity extends AppCompatActivity implements OnArtistClickList
         FragmentManager fragmentManager = getSupportFragmentManager();
         PlaybackFragment newFragment = PlaybackFragment.newInstance(track, position);
         newFragment.show(fragmentManager, "playback");
-
-        /*
-        Intent intent = new Intent(this, PlaybackActivity.class);
-        intent.putParcelableArrayListExtra(PlaybackActivity.TRACK_INFO_INTENT_EXTRA, track);
-        intent.putExtra(PlaybackActivity.TRACK_POSITION_INTENT_EXTRA, position);
-        startActivity(intent);
-         */
     }
 }

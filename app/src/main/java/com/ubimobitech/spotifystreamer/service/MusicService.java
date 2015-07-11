@@ -8,11 +8,13 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.media.session.PlaybackState;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
@@ -59,6 +61,7 @@ public class MusicService extends Service implements Playback.Callback {
     private static final int REQUEST_CODE = 89;
 
     private final IBinder mBinder = new ServiceStub(this);
+    private SharedPreferences mPrefs;
 
     public MusicService() {
     }
@@ -74,6 +77,8 @@ public class MusicService extends Service implements Playback.Callback {
     @Override
     public void onCreate() {
         super.onCreate();
+
+        mPrefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 
         mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
@@ -142,7 +147,9 @@ public class MusicService extends Service implements Playback.Callback {
     public void play(TrackInfo track, int position) {
         mCurrentPosition = position;
         mPlayback.play(track);
-        setupForeground(track);
+
+        if (mPrefs.getBoolean(getString(R.string.pref_notification_key), true))
+            setupForeground(track);
     }
 
     public void prev() {
@@ -154,7 +161,9 @@ public class MusicService extends Service implements Playback.Callback {
             }
 
             mPlayback.play(mQueue.get(mCurrentPosition));
-            setupForeground(mQueue.get(mCurrentPosition));
+
+            if (mPrefs.getBoolean(getString(R.string.pref_notification_key), true))
+                setupForeground(mQueue.get(mCurrentPosition));
         }
     }
 
@@ -167,7 +176,9 @@ public class MusicService extends Service implements Playback.Callback {
             }
 
             mPlayback.play(mQueue.get(mCurrentPosition));
-            setupForeground(mQueue.get(mCurrentPosition));
+
+            if (mPrefs.getBoolean(getString(R.string.pref_notification_key), true))
+                setupForeground(mQueue.get(mCurrentPosition));
         }
     }
 

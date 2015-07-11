@@ -7,8 +7,10 @@ import android.content.ServiceConnection;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.ShareActionProvider;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -51,6 +53,8 @@ public class PlaybackActivity extends AppCompatActivity implements View.OnClickL
     private IMusicServiceAidlInterface mService;
     private Handler updateHandler = new Handler();
     private int mCurrentPosition;
+
+    private ShareActionProvider mShareActionProvider;
 
     private ServiceConnection mConnection = new ServiceConnection() {
         @Override
@@ -118,22 +122,16 @@ public class PlaybackActivity extends AppCompatActivity implements View.OnClickL
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_playback, menu);
+
+        // Locate MenuItem with ShareActionProvider
+        MenuItem item = menu.findItem(R.id.action_share);
+
+        // Fetch and store ShareActionProvider
+        mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(item);
+
+        setShareIntent(mTrackInfo.get(mCurrentPosition));
+
         return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
     }
 
     /**
@@ -233,6 +231,25 @@ public class PlaybackActivity extends AppCompatActivity implements View.OnClickL
             mTimeProgress.setText("");
             mProgressBar.setMax(0);
             mProgressBar.setProgress(0);
+
+            setShareIntent(track);
+        }
+    }
+
+    private void setShareIntent(TrackInfo track) {
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
+        shareIntent.setType("text/plain");
+
+        StringBuilder builder = new StringBuilder(getString(R.string.share_music));
+        builder.append(track.getArtistName())
+                .append(": " + track.getTrackName())
+                .append(" " + track.getPreviewUrl());
+
+        shareIntent.putExtra(Intent.EXTRA_TEXT, builder.toString());
+
+        if (mShareActionProvider != null) {
+            mShareActionProvider.setShareIntent(shareIntent);
         }
     }
 }

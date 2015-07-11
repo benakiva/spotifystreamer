@@ -32,8 +32,13 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.support.v4.app.DialogFragment;
+import android.support.v4.view.MenuItemCompat;
+import android.support.v7.widget.ShareActionProvider;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -78,6 +83,8 @@ public class PlaybackFragment extends DialogFragment implements View.OnClickList
     private int mCurrentPosition;
     private IMusicServiceAidlInterface mService;
     private Handler updateHandler = new Handler();
+
+    private ShareActionProvider mShareActionProvider;
 
     private ServiceConnection mConnection = new ServiceConnection() {
         @Override
@@ -165,6 +172,26 @@ public class PlaybackFragment extends DialogFragment implements View.OnClickList
         Dialog dialog = super.onCreateDialog(savedInstanceState);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         return dialog;
+    }
+
+    /**
+     * @param menu     The options menu in which you place your items.
+     * @param inflater
+     * @see #setHasOptionsMenu
+     * @see #onPrepareOptionsMenu
+     * @see #onOptionsItemSelected
+     */
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_playback, menu);
+
+        // Locate MenuItem with ShareActionProvider
+        MenuItem item = menu.findItem(R.id.action_share);
+
+        // Fetch and store ShareActionProvider
+        mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(item);
+
+        setShareIntent(mTrackInfo.get(mCurrentPosition));
     }
 
     /**
@@ -264,6 +291,25 @@ public class PlaybackFragment extends DialogFragment implements View.OnClickList
             mTimeProgress.setText("");
             mProgressBar.setMax(0);
             mProgressBar.setProgress(0);
+
+            setShareIntent(track);
+        }
+    }
+
+    private void setShareIntent(TrackInfo track) {
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
+        shareIntent.setType("text/plain");
+
+        StringBuilder builder = new StringBuilder(getString(R.string.share_music));
+        builder.append(track.getArtistName())
+                .append(": " + track.getTrackName())
+                .append(" " + track.getPreviewUrl());
+
+        shareIntent.putExtra(Intent.EXTRA_TEXT, builder.toString());
+
+        if (mShareActionProvider != null) {
+            mShareActionProvider.setShareIntent(shareIntent);
         }
     }
 }
