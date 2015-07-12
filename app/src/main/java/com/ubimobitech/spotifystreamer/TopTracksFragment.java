@@ -175,6 +175,9 @@ public class TopTracksFragment extends ListFragment implements Callback<Tracks> 
 
             mTrackInfo = savedInstanceState.getParcelableArrayList(LIST_STATE);
 
+            if (mTrackInfo == null)
+                mTrackInfo = new ArrayList<>();
+
             mTracksAdapter = new TopTracksAdapter(getActivity(),
                     mTrackInfo);
             mListView.setAdapter(mTracksAdapter);
